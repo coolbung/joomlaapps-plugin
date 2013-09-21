@@ -27,14 +27,15 @@ class PlgSystemJoomlaapps extends JPlugin
 		{
 			$app = JFactory::getApplication();
 			$this->_joomlaapps = array(
-				'installat'	=>	base64_decode($app->input->get('installat', null, 'base64')),
-				'installapp'	=>	$app->input->get('installapp', null, 'int'),
+				'installat'	=>	base64_decode(JRequest::getVar('installat', null, 'POST')),
+				'installapp'	=>	JRequest::getInt('installapp', null, 'POST'),
 				'timestamp'	=>	time(),
-				'product'	=>	addslashes(base64_decode($app->input->get('product', '', 'base64'))),
-				'release'	=>	preg_replace('/[^\d\.]/', '', base64_decode($app->input->get('release', '', 'base64'))),
-				'dev_level'	=>	(int) base64_decode($app->input->get('dev_level', '', 'base64')),
+				'product'	=>	addslashes(base64_decode(JRequest::getCmd('product', '', 'POST'))),
+				'release'	=>	preg_replace('/[^\d\.]/', '', base64_decode(JRequest::getCmd('release', '', 'POST'))),
+				'dev_level'	=>	(int) base64_decode(JRequest::getCmd('dev_level', '', 'POST')),
 			);
 		}
+		//print_r($_POST); die;
 		return $this->_joomlaapps;
 	}
 	
@@ -49,6 +50,7 @@ class PlgSystemJoomlaapps extends JPlugin
 				$this->_sessionvals[$key] = $session->get('joomlaapps.' . $key, null);
 			}
 		}
+		print_r($this->_sessionvals);
 		return $this->_sessionvals;
 	}
 	
@@ -73,13 +75,20 @@ class PlgSystemJoomlaapps extends JPlugin
 	
 	private function isDataOK()
 	{
-		jimport('joomla.form.rule.url');
 		$session = JFactory::getSession();
 		$joomlaapps = $this->getJoomlaapps();
-		$field = new SimpleXMLElement('<field></field>');
-		$rule = new JFormRuleUrl;
-		return $rule->test($field, $joomlaapps['installat']) &&
-			is_int($joomlaapps['installapp']);
+		
+		return $this->validateURL($joomlaapps['installat']) && intval($joomlaapps['installapp']);
+	}
+	
+	private function validateURL($url=null) {
+		if (!$url) return false;
+		
+		if (preg_match("/\b(?:(?:https?|ftp):\/\/|www\.)[-a-z0-9+&@#\/%?=~_|!:,.;]*[-a-z0-9+&@#\/%=~_|]/i", $url)) {
+		  return true;
+		}
+		
+		return false;
 	}
 	
 	private function isSessionOK()
@@ -119,8 +128,8 @@ class PlgSystemJoomlaapps extends JPlugin
 				$app = JFactory::getApplication();
 				$app->redirect($joomlaapps['installat'].$installfrom);
 			}
-			$app = JFactory::getApplication();
-			$app->redirect(JRoute::_('index.php?option=com_users&view=login'));
+			//$app = JFactory::getApplication();
+			//$app->redirect(JRoute::_('index.php?option=com_user&view=login'));
 		}
 	}
 	
